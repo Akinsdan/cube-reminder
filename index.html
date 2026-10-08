@@ -60,7 +60,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
 
   <section class="card">
     <div class="row">
-      <div><label for="atime">Alarm time on test day</label><input id="atime" type="time"></div>
+      <div><label for="atime">Alarm time (rings from 1 day before)</label><input id="atime" type="time"></div>
       <div><label>Sound check</label><button id="testAlarm" type="button" style="width:100%;padding:11px">Test alarm sound</button></div>
     </div>
     <div class="split">The alarm rings while the app is open. Calendar events (below) ring when it is closed.</div>
@@ -94,7 +94,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
   <h2>All batches</h2>
   <div id="list"></div>
 </main>
-<div id="alarm" hidden role="alertdialog" aria-live="assertive"><h2>Cube test due</h2><div id="alarmText"></div><p>No sound? Tap the screen once.</p><button id="stop" type="button">Stop alarm</button></div>
+<div id="alarm" hidden role="alertdialog" aria-live="assertive"><h2>Cube test reminder</h2><div id="alarmText"></div><p>No sound? Tap the screen once.</p><button id="stop" type="button">Stop alarm</button></div>
 
 <script>
 (function(){
@@ -141,7 +141,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
       var x=dueDate(r,d),t=x.getFullYear()+p(x.getMonth()+1)+p(x.getDate())+'T'+alarmTime.replace(':','')+'00';
       L.push('BEGIN:VEVENT','UID:'+r.id+'-'+d+'@cube','DTSTAMP:'+t,'DTSTART:'+t,'DURATION:PT1H',
         'SUMMARY:Cube test '+d+'d - '+r.company+' '+r.grade,'DESCRIPTION:Take '+split(r.cubes)[d]+' cubes to the lab',
-        'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:Cube test tomorrow','END:VALARM','BEGIN:VALARM','TRIGGER:PT0S','ACTION:AUDIO','END:VALARM','BEGIN:VALARM','TRIGGER:PT0S','ACTION:DISPLAY','DESCRIPTION:Cube test due now','END:VALARM','END:VEVENT');
+        'BEGIN:VALARM','TRIGGER:-P1D','ACTION:AUDIO','END:VALARM','BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:Cube test tomorrow','END:VALARM','BEGIN:VALARM','TRIGGER:PT0S','ACTION:DISPLAY','DESCRIPTION:Cube test due now','END:VALARM','END:VEVENT');
     });
     L.push('END:VCALENDAR');return L.join('\r\n');
   }
@@ -189,7 +189,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
   function beep(f,t0,dur){if(!ac)return;var o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+t0;o.type='square';o.frequency.value=f;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.5,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+dur+0.02)}
   function ring(){audio();for(var i=0;i<6;i++)beep(i%2?1040:880,i*0.17,0.13);if(navigator.vibrate)navigator.vibrate([300,150,300])}
   function startAlarm(items){
-    cur=items;$('alarmText').innerHTML=items.length?items.map(function(i){return '<p><b>'+esc(i.r.company)+'</b> · '+esc(i.r.grade)+'<br>'+i.d+'-day test · '+split(i.r.cubes)[i.d]+' cubes</p>'}).join(''):'<p>This is a test.</p>';
+    cur=items;$('alarmText').innerHTML=items.length?items.map(function(i){return '<p><b>'+esc(i.r.company)+'</b> · '+esc(i.r.grade)+'<br>'+i.d+'-day test · '+split(i.r.cubes)[i.d]+' cubes<br>'+status(dueDate(i.r,i.d))[0]+'</p>'}).join(''):'<p>This is a test.</p>';
     $('alarm').hidden=false;if(!ringing){ringing=true;ring();timer=setInterval(ring,1300)}
   }
   function stopAlarm(){
@@ -203,7 +203,7 @@ button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line
     try{seen=JSON.parse(localStorage.getItem('cubeAck')||'{}')}catch(e){}
     recs.forEach(function(r){[7,14,28].forEach(function(d){
       var n=diff(dueDate(r,d));
-      if(!r.done[d]&&!seen[r.id+'-'+d+'-'+t]&&(n<0||(n===0&&nowMin>=(+p[0])*60+(+p[1]))))list.push({r:r,d:d});
+      if(!r.done[d]&&!seen[r.id+'-'+d+'-'+t]&&(n<0||(n<=1&&nowMin>=(+p[0])*60+(+p[1]))))list.push({r:r,d:d});
     })});
     if(list.length)startAlarm(list);
   }

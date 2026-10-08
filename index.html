@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f4e8c">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cube Reminder">
+<title>Cube Test Reminder</title>
+<style>
+:root{--bg:#eef2f7;--card:#fff;--ink:#14233a;--mute:#5d6b80;--line:#d5dce7;--blue:#1f4e8c;--blue-ink:#fff;--ok:#1d7a4a;--warn:#b86e00;--bad:#b3261e;--tint:#e3ebf6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1623;--card:#172336;--ink:#e6edf7;--mute:#9aa9bf;--line:#2a3a52;--blue:#5b8fd6;--blue-ink:#0e1623;--ok:#4cc38a;--warn:#e8a43a;--bad:#ff8a80;--tint:#1d2d45}}
+:root[data-theme="dark"]{--bg:#0e1623;--card:#172336;--ink:#e6edf7;--mute:#9aa9bf;--line:#2a3a52;--blue:#5b8fd6;--blue-ink:#0e1623;--ok:#4cc38a;--warn:#e8a43a;--bad:#ff8a80;--tint:#1d2d45}
+*{box-sizing:border-box}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;margin:8px 0 2px}
+h2{font-size:1.05rem;margin:22px 0 8px}
+.sub{color:var(--mute);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:.85rem;color:var(--mute);margin:10px 0 4px}
+input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 12px}
+.primary{background:var(--blue);color:var(--blue-ink);border-color:var(--blue);width:100%;margin-top:14px;font-weight:600;padding:12px}
+.split{color:var(--mute);font-size:.85rem;margin-top:6px}
+.test{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:8px;margin-top:8px}
+.test.done{opacity:.6}
+.test .d{flex:1}
+.test b{display:block}
+.tag{font-size:.8rem;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--tint)}
+.tag.bad{color:var(--bad)}.tag.warn{color:var(--warn)}.tag.ok{color:var(--ok)}
+.head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.head small{color:var(--mute)}
+.actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.actions button{font-size:.85rem;padding:7px 10px}
+.empty{color:var(--mute);text-align:center;padding:18px}
+.soon .test{border-color:var(--blue)}
+[hidden]{display:none!important}
+#alarm{position:fixed;inset:0;z-index:99;background:var(--bad);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;animation:flash 1s steps(2) infinite}
+#alarm h2{font-size:1.8rem;margin:0 0 10px}
+#alarm p{margin:4px 0;font-size:1.05rem}
+#alarm button{margin-top:24px;font-size:1.3rem;font-weight:600;padding:16px 36px;background:#fff;color:#14233a;border:0}
+@keyframes flash{50%{filter:brightness(.8)}}
+@media (prefers-reduced-motion:reduce){#alarm{animation:none}}
+.bar{display:flex;gap:8px;align-items:center;justify-content:space-between}
+</style>
+</head>
+<body>
+<main>
+  <div class="bar"><h1>Cube Test Reminder</h1><button id="notif" type="button">Turn on alerts</button></div>
+  <p class="sub">Log each batch once. The app tells you when to take cubes to the lab.</p>
+
+  <section class="card">
+    <div class="row">
+      <div><label for="atime">Alarm time on test day</label><input id="atime" type="time"></div>
+      <div><label>Sound check</label><button id="testAlarm" type="button" style="width:100%;padding:11px">Test alarm sound</button></div>
+    </div>
+    <div class="split">The alarm rings while the app is open. Calendar events (below) ring when it is closed.</div>
+  </section>
+
+  <section class="card">
+    <label for="grade">Concrete grade</label>
+    <input id="grade" list="grades" placeholder="e.g. C30 20mm">
+    <datalist id="grades"><option value="C20 20mm"><option value="C25 20mm"><option value="C30 20mm"><option value="C35 20mm"><option value="C35 CFA"><option value="C40 20mm"></datalist>
+
+    <label for="company">Company name</label>
+    <input id="company" placeholder="Client or company">
+
+    <label for="site">Site / location (optional)</label>
+    <input id="site" placeholder="e.g. Block B, slab">
+
+    <div class="row">
+      <div><label for="when">Batched on</label><input id="when" type="datetime-local"></div>
+      <div><label for="cubes">Number of cubes</label>
+        <select id="cubes"><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
+    </div>
+    <div class="split" id="split"></div>
+    <button class="primary" id="add" type="button">Save batch</button>
+  </section>
+
+  <section id="soonWrap" hidden>
+    <h2>Needs attention</h2>
+    <div class="card soon" id="soon"></div>
+  </section>
+
+  <h2>All batches</h2>
+  <div id="list"></div>
+</main>
+<div id="alarm" hidden role="alertdialog" aria-live="assertive"><h2>Cube test due</h2><div id="alarmText"></div><p>No sound? Tap the screen once.</p><button id="stop" type="button">Stop alarm</button></div>
+
+<script>
+(function(){
+  var KEY='cubeReminders.v1', recs=[], alarmTime='08:00';
+  try{alarmTime=localStorage.getItem('cubeAlarmTime')||'08:00'}catch(e){}
+  var $=function(id){return document.getElementById(id)};
+  function load(){try{recs=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){recs=[]}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(recs))}catch(e){}}
+  function split(n){var b=Math.floor(n/3),r=n%3;return {7:b,14:b+(r===2?1:0),28:b+(r>0?1:0)}}
+  function dueDate(r,d){var x=new Date(r.when);x.setDate(x.getDate()+d);return x}
+  function day0(x){return new Date(x.getFullYear(),x.getMonth(),x.getDate())}
+  function diff(x){return Math.round((day0(x)-day0(new Date()))/864e5)}
+  function fmt(x){return x.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'})}
+  function status(x){var n=diff(x);if(n<0)return['Overdue by '+(-n)+'d','bad'];if(n===0)return['Due today','warn'];if(n===1)return['Tomorrow','warn'];return['In '+n+' days','ok']}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function nowLocal(){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+
+  function updSplit(){var s=split(+$('cubes').value);$('split').textContent='Lab split: '+s[7]+' cubes at 7 days, '+s[14]+' at 14 days, '+s[28]+' at 28 days.'}
+
+  function testHtml(r,d,withName){
+    var x=dueDate(r,d),st=status(x),done=r.done[d],s=split(r.cubes)[d];
+    return '<div class="test'+(done?' done':'')+'"><input type="checkbox" style="width:22px;height:22px" data-id="'+r.id+'" data-d="'+d+'" '+(done?'checked':'')+' aria-label="Mark '+d+'-day test done">'+
+      '<div class="d"><b>'+(withName?esc(r.company)+' · '+esc(r.grade)+' · ':'')+d+'-day test · '+s+' cubes</b><small>'+fmt(x)+'</small></div>'+
+      '<span class="tag '+(done?'ok':st[1])+'">'+(done?'Tested':st[0])+'</span></div>';
+  }
+
+  function render(){
+    var soon='';
+    recs.forEach(function(r){[7,14,28].forEach(function(d){if(!r.done[d]&&diff(dueDate(r,d))<=2)soon+=testHtml(r,d,true)})});
+    $('soonWrap').hidden=!soon;$('soon').innerHTML=soon;
+    if(!recs.length){$('list').innerHTML='<div class="card empty">No batches yet. Save your first batch above.</div>';return}
+    var s=recs.slice().sort(function(a,b){return new Date(b.when)-new Date(a.when)});
+    $('list').innerHTML=s.map(function(r){
+      return '<div class="card"><div class="head"><div><b>'+esc(r.company)+'</b><br><small>'+esc(r.grade)+(r.site?' · '+esc(r.site):'')+'</small></div>'+
+        '<small>Batched '+new Date(r.when).toLocaleString(undefined,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+'<br>'+r.cubes+' cubes</small></div>'+
+        testHtml(r,7)+testHtml(r,14)+testHtml(r,28)+
+        '<div class="actions"><button data-cal="'+r.id+'" type="button">Add to phone calendar</button><button data-del="'+r.id+'" type="button">Delete</button></div></div>';
+    }).join('');
+  }
+
+  function ics(r){
+    var p=function(n){return String(n).padStart(2,'0')},L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Cube Reminder//EN'];
+    [7,14,28].forEach(function(d){
+      var x=dueDate(r,d),t=x.getFullYear()+p(x.getMonth()+1)+p(x.getDate())+'T'+alarmTime.replace(':','')+'00';
+      L.push('BEGIN:VEVENT','UID:'+r.id+'-'+d+'@cube','DTSTAMP:'+t,'DTSTART:'+t,'DURATION:PT1H',
+        'SUMMARY:Cube test '+d+'d - '+r.company+' '+r.grade,'DESCRIPTION:Take '+split(r.cubes)[d]+' cubes to the lab',
+        'BEGIN:VALARM','TRIGGER:-P1D','ACTION:DISPLAY','DESCRIPTION:Cube test tomorrow','END:VALARM','BEGIN:VALARM','TRIGGER:PT0S','ACTION:AUDIO','END:VALARM','BEGIN:VALARM','TRIGGER:PT0S','ACTION:DISPLAY','DESCRIPTION:Cube test due now','END:VALARM','END:VEVENT');
+    });
+    L.push('END:VCALENDAR');return L.join('\r\n');
+  }
+
+  function notifyDue(){
+    if(!('Notification' in window)||Notification.permission!=='granted')return;
+    var today=day0(new Date()).toDateString(),seen={};
+    try{seen=JSON.parse(localStorage.getItem('cubeNotified')||'{}')}catch(e){}
+    recs.forEach(function(r){[7,14,28].forEach(function(d){
+      var k=r.id+'-'+d+'-'+today;
+      if(!r.done[d]&&diff(dueDate(r,d))<=1&&!seen[k]){seen[k]=1;
+        new Notification('Cube test '+(diff(dueDate(r,d))<1?'due today':'tomorrow'),{body:r.company+' · '+r.grade+' · '+d+'-day · '+split(r.cubes)[d]+' cubes'})}
+    })});
+    try{localStorage.setItem('cubeNotified',JSON.stringify(seen))}catch(e){}
+  }
+
+  $('cubes').onchange=updSplit;
+  $('when').value=nowLocal();updSplit();
+
+  $('add').onclick=function(){
+    var g=$('grade').value.trim(),c=$('company').value.trim(),w=$('when').value;
+    if(!g||!c||!w){alert('Enter the grade, company name and batch time.');return}
+    recs.push({id:'r'+Date.now(),grade:g,company:c,site:$('site').value.trim(),when:w,cubes:+$('cubes').value,done:{7:false,14:false,28:false}});
+    save();$('grade').value='';$('company').value='';$('site').value='';$('when').value=nowLocal();render();notifyDue();
+  };
+
+  document.addEventListener('click',function(e){
+    var t=e.target,id=t.getAttribute('data-del');
+    if(id&&confirm('Delete this batch and its reminders?')){recs=recs.filter(function(r){return r.id!==id});save();render()}
+    var cal=t.getAttribute('data-cal');
+    if(cal){var r=recs.filter(function(x){return x.id===cal})[0];
+      try{var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics(r)],{type:'text/calendar'}));a.download='cube-tests.ics';a.click()}catch(er){alert('Calendar file could not be created here.')}}
+  });
+  document.addEventListener('change',function(e){
+    var t=e.target;if(t.getAttribute('data-id')){var r=recs.filter(function(x){return x.id===t.getAttribute('data-id')})[0];r.done[t.getAttribute('data-d')]=t.checked;save();render()}
+  });
+  $('notif').onclick=function(){
+    if(!('Notification' in window)){alert('This browser does not support alerts. Use "Add to phone calendar" instead.');return}
+    Notification.requestPermission().then(function(p){$('notif').textContent=p==='granted'?'Alerts on':'Alerts blocked';notifyDue()});
+  };
+  if('Notification' in window&&Notification.permission==='granted')$('notif').textContent='Alerts on';
+
+  var ac=null,timer=null,ringing=false,cur=[];
+  function audio(){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state==='suspended')ac.resume()}catch(e){}return ac}
+  function beep(f,t0,dur){if(!ac)return;var o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+t0;o.type='square';o.frequency.value=f;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.5,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+dur+0.02)}
+  function ring(){audio();for(var i=0;i<6;i++)beep(i%2?1040:880,i*0.17,0.13);if(navigator.vibrate)navigator.vibrate([300,150,300])}
+  function startAlarm(items){
+    cur=items;$('alarmText').innerHTML=items.length?items.map(function(i){return '<p><b>'+esc(i.r.company)+'</b> · '+esc(i.r.grade)+'<br>'+i.d+'-day test · '+split(i.r.cubes)[i.d]+' cubes</p>'}).join(''):'<p>This is a test.</p>';
+    $('alarm').hidden=false;if(!ringing){ringing=true;ring();timer=setInterval(ring,1300)}
+  }
+  function stopAlarm(){
+    clearInterval(timer);ringing=false;$('alarm').hidden=true;if(navigator.vibrate)navigator.vibrate(0);
+    var seen={};try{seen=JSON.parse(localStorage.getItem('cubeAck')||'{}')}catch(e){}
+    var t=day0(new Date()).toDateString();cur.forEach(function(i){seen[i.r.id+'-'+i.d+'-'+t]=1});
+    try{localStorage.setItem('cubeAck',JSON.stringify(seen))}catch(e){}cur=[];
+  }
+  function checkAlarm(){
+    if(ringing)return;var seen={},list=[],p=alarmTime.split(':'),nowMin=new Date().getHours()*60+new Date().getMinutes(),t=day0(new Date()).toDateString();
+    try{seen=JSON.parse(localStorage.getItem('cubeAck')||'{}')}catch(e){}
+    recs.forEach(function(r){[7,14,28].forEach(function(d){
+      var n=diff(dueDate(r,d));
+      if(!r.done[d]&&!seen[r.id+'-'+d+'-'+t]&&(n<0||(n===0&&nowMin>=(+p[0])*60+(+p[1]))))list.push({r:r,d:d});
+    })});
+    if(list.length)startAlarm(list);
+  }
+  $('atime').value=alarmTime;
+  $('atime').onchange=function(){alarmTime=$('atime').value||'08:00';try{localStorage.setItem('cubeAlarmTime',alarmTime)}catch(e){}checkAlarm()};
+  $('testAlarm').onclick=function(){audio();startAlarm([])};
+  $('stop').onclick=stopAlarm;
+  document.addEventListener('pointerdown',function(){audio()});
+
+  load();render();notifyDue();checkAlarm();setInterval(function(){render();notifyDue();checkAlarm()},30000);
+})();
+</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}</script>
+</body>
+</html>
